@@ -430,6 +430,8 @@ body {
           <option value="open">Open</option>
           <option value="all">All</option>
           <option value="resolved">Resolved</option>
+          <option value="emailed">Email sent</option>
+          <option value="not_emailed">Not emailed</option>
         </select>
       </div>
     </div>
@@ -539,7 +541,9 @@ function filterIssues() {
     const matchType = !type || issue.issue_type === type;
     const matchStatus = status === 'all' ||
       (status === 'open' && !issue.resolved_at) ||
-      (status === 'resolved' && issue.resolved_at);
+      (status === 'resolved' && issue.resolved_at) ||
+      (status === 'emailed' && issue.chased_at) ||
+      (status === 'not_emailed' && !issue.chased_at && !issue.resolved_at);
     return matchSearch && matchType && matchStatus;
   });
 
@@ -565,10 +569,12 @@ function renderList() {
         <span class="issue-date">${formatDate(issue.created_at)}</span>
       </div>
       <div class="issue-customer">${issue.customer_name || '--'}</div>
-      <span class="issue-type-badge badge-${issue.issue_type}">${ISSUE_LABELS[issue.issue_type] || issue.issue_type}</span>
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;">
+        <span class="issue-type-badge badge-${issue.issue_type}" style="margin:0">${ISSUE_LABELS[issue.issue_type] || issue.issue_type}</span>
+        ${issue.chased_at ? '<span style="font-size:10px;font-weight:600;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:4px;padding:2px 6px;">Email sent</span>' : ''}
+      </div>
       ${issue.notes ? '<div class="issue-notes-preview">' + escHtml(issue.notes) + '</div>' : ''}
       ${issue.resolved_at ? '<div class="chased-dot"></div>' : ''}
-      ${issue.chased_at && !issue.resolved_at ? '<div style="position:absolute;top:12px;right:12px;font-size:10px;font-weight:600;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:4px;padding:2px 6px;">Email sent</div>' : ''}
     </div>
   `).join('');
 }
