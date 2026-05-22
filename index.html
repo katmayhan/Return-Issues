@@ -568,6 +568,7 @@ function renderList() {
       <span class="issue-type-badge badge-${issue.issue_type}">${ISSUE_LABELS[issue.issue_type] || issue.issue_type}</span>
       ${issue.notes ? '<div class="issue-notes-preview">' + escHtml(issue.notes) + '</div>' : ''}
       ${issue.resolved_at ? '<div class="chased-dot"></div>' : ''}
+      ${issue.chased_at && !issue.resolved_at ? '<div style="position:absolute;top:12px;right:12px;font-size:10px;font-weight:600;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:4px;padding:2px 6px;">Email sent</div>' : ''}
     </div>
   `).join('');
 }
@@ -596,6 +597,7 @@ function renderDetail() {
           <span class="issue-type-badge badge-${issue.issue_type}">${ISSUE_LABELS[issue.issue_type] || issue.issue_type}</span>
           &nbsp;Logged ${formatDate(issue.created_at)} by ${issue.logged_by}
           ${isResolved ? ' &middot; <span style="color:var(--green);font-weight:600">Resolved ' + formatDate(issue.resolved_at) + '</span>' : ''}
+          ${issue.chased_at ? ' &middot; <span style="color:#2563eb;font-weight:600">Email sent ' + formatDate(issue.chased_at) + '</span>' : ''}
         </div>
       </div>
       <button class="resolve-btn ${isResolved ? 'resolved-state' : ''}" onclick="${isResolved ? '' : 'openResolveModal()'}">
