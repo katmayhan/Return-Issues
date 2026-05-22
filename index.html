@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Baboodle · Return Issues</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --red: #dc2626;
+  --red-light: #fef2f2;
+  --red-mid: #fee2e2;
+  --green: #16a34a;
+  --green-light: #f0fdf4;
+  --amber: #d97706;
+  --amber-light: #fffbeb;
+  --blue: #2563eb;
+  --blue-light: #eff6ff;
+  --bg: #f9fafb;
+  --surface: #ffffff;
+  --border: #e5e7eb;
+  --text: #111827;
+  --text-2: #6b7280;
+  --text-3: #9ca3af;
+  --radius: 10px;
+  --radius-sm: 6px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* Header */
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-logo { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; }
+.header-logo span { color: var(--red); }
+.header-meta { font-size: 13px; color: var(--text-3); }
+
+/* Layout */
+.layout {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  height: calc(100vh - 56px);
+}
+
+/* Left panel - issues list */
+.list-panel {
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.list-filters {
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.filter-row { display: flex; gap: 8px; }
+.filter-select {
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--bg);
+  outline: none;
+  cursor: pointer;
+}
+.filter-select:focus { border-color: var(--red); }
+.search-input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--surface);
+  outline: none;
+}
+.search-input:focus { border-color: var(--red); }
+.list-count {
+  padding: 8px 16px;
+  font-size: 12px;
+  color: var(--text-3);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+.issues-list {
+  flex: 1;
+  overflow-y: auto;
+}
+.issue-row {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.1s;
+  position: relative;
+}
+.issue-row:hover { background: var(--bg); }
+.issue-row.active { background: var(--red-light); border-left: 3px solid var(--red); }
+.issue-row.resolved { opacity: 0.5; }
+.issue-row-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.issue-order {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--red);
+}
+.issue-date { font-size: 12px; color: var(--text-3); }
+.issue-customer { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+.issue-type-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin-bottom: 4px;
+}
+.badge-incomplete_return { background: #fef3c7; color: #92400e; }
+.badge-damaged { background: var(--red-light); color: var(--red); }
+.badge-missing_part { background: #ede9fe; color: #5b21b6; }
+.badge-wrong_item { background: var(--blue-light); color: var(--blue); }
+.badge-other { background: var(--bg); color: var(--text-2); border: 1px solid var(--border); }
+.issue-notes-preview { font-size: 12px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chased-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--green);
+  position: absolute;
+  top: 14px; right: 14px;
+}
+.empty-list {
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--text-3);
+  font-size: 14px;
+}
+
+/* Right panel - detail */
+.detail-panel {
+  overflow-y: auto;
+  padding: 32px;
+  background: var(--bg);
+}
+.detail-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-3);
+  gap: 12px;
+}
+.detail-empty svg { opacity: 0.3; }
+
+.detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  gap: 16px;
+}
+.detail-header-left h2 {
+  font-size: 22px;
+  font-weight: 700;
+  font-family: 'DM Mono', monospace;
+  margin-bottom: 4px;
+}
+.detail-header-left .sub { font-size: 14px; color: var(--text-2); }
+.resolve-btn {
+  background: var(--green);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 10px 18px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.resolve-btn:hover { opacity: 0.9; }
+.resolve-btn.resolved-state {
+  background: var(--bg);
+  color: var(--text-2);
+  border: 1px solid var(--border);
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.detail-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.detail-card-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-3);
+  margin-bottom: 10px;
+}
+.detail-field { margin-bottom: 8px; }
+.detail-field:last-child { margin-bottom: 0; }
+.detail-field-label { font-size: 11px; color: var(--text-3); margin-bottom: 2px; }
+.detail-field-value { font-size: 14px; font-weight: 500; }
+.detail-field-value.mono { font-family: 'DM Mono', monospace; font-size: 13px; }
+
+.detail-notes {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.detail-photo {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 24px;
+}
+.detail-photo img {
+  width: 100%;
+  max-height: 300px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+}
+.no-photo { color: var(--text-3); font-size: 13px; font-style: italic; }
+
+/* Email composer */
+.email-composer {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+.email-composer-header {
+  background: var(--red);
+  padding: 14px 16px;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.email-composer-body { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.email-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.email-field:last-of-type { border-bottom: none; }
+.email-field-label { font-size: 12px; color: var(--text-3); width: 50px; flex-shrink: 0; }
+.email-field-value { font-size: 14px; color: var(--text); flex: 1; }
+.email-subject-input {
+  flex: 1;
+  border: none;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  outline: none;
+  background: none;
+  font-weight: 600;
+}
+.email-body-textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  outline: none;
+  resize: vertical;
+  min-height: 160px;
+  line-height: 1.6;
+}
+.email-body-textarea:focus { border-color: var(--red); }
+.email-actions { display: flex; gap: 10px; align-items: center; }
+.send-btn {
+  background: var(--red);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 12px 24px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.send-btn:hover { opacity: 0.9; }
+.send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.send-status { font-size: 13px; color: var(--text-3); }
+.send-status.success { color: var(--green); font-weight: 600; }
+.send-status.error { color: var(--red); }
+
+/* Resolve modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+.modal-overlay.visible { display: flex; }
+.modal {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 24px;
+  width: 460px;
+  max-width: 90vw;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.modal h3 { font-size: 18px; font-weight: 700; }
+.modal p { font-size: 14px; color: var(--text-2); }
+.modal textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  outline: none;
+  resize: none;
+  min-height: 80px;
+}
+.modal textarea:focus { border-color: var(--red); }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.modal-cancel {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 18px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  cursor: pointer;
+}
+.modal-confirm {
+  background: var(--green);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 10px 18px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Loading */
+.spinner {
+  width: 32px; height: 32px;
+  border: 3px solid var(--border);
+  border-top-color: var(--red);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin: 48px auto;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">Baboodle <span>·</span> Return Issues</div>
+  <div class="header-meta" id="header-meta">Loading...</div>
+</div>
+
+<div class="layout">
+  <!-- Left: issues list -->
+  <div class="list-panel">
+    <div class="list-filters">
+      <input class="search-input" id="search-input" placeholder="Search order, customer, tracking..." oninput="filterIssues()">
+      <div class="filter-row">
+        <select class="filter-select" id="filter-type" onchange="filterIssues()">
+          <option value="">All types</option>
+          <option value="incomplete_return">Incomplete return</option>
+          <option value="damaged">Damaged</option>
+          <option value="missing_part">Missing part</option>
+          <option value="wrong_item">Wrong item</option>
+          <option value="other">Other</option>
+        </select>
+        <select class="filter-select" id="filter-status" onchange="filterIssues()">
+          <option value="open">Open</option>
+          <option value="all">All</option>
+          <option value="resolved">Resolved</option>
+        </select>
+      </div>
+    </div>
+    <div class="list-count" id="list-count">Loading...</div>
+    <div class="issues-list" id="issues-list">
+      <div class="spinner"></div>
+    </div>
+  </div>
+
+  <!-- Right: detail -->
+  <div class="detail-panel" id="detail-panel">
+    <div class="detail-empty">
+      <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"/></svg>
+      <div>Select an issue to view details</div>
+    </div>
+  </div>
+</div>
+
+<!-- Resolve modal -->
+<div class="modal-overlay" id="resolve-modal">
+  <div class="modal">
+    <h3>Mark as resolved</h3>
+    <p>Add a note about how this was resolved (optional).</p>
+    <textarea id="resolve-notes" placeholder="e.g. Customer confirmed missing item is in a separate parcel, arriving tomorrow"></textarea>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeResolveModal()">Cancel</button>
+      <button class="modal-confirm" onclick="confirmResolve()">Mark resolved</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function() {
+
+const SUPABASE_URL = 'https://rousljiuoswvbszgfmys.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJvdXNsaml1b3N3dmJzemdmbXlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NTkwMDYsImV4cCI6MjA5MTEzNTAwNn0.pIz0ESqkXP6wqjI4H0sOOR-5diZTSQzSh9bksRLzaI0';
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let allIssues = [];
+let filteredIssues = [];
+let selectedIssue = null;
+let resolvingIssueId = null;
+
+const ISSUE_LABELS = {
+  incomplete_return: 'Incomplete return',
+  damaged: 'Damaged item',
+  missing_part: 'Missing part',
+  wrong_item: 'Wrong item returned',
+  other: 'Other'
+};
+
+const EMAIL_TEMPLATES = {
+  incomplete_return: (issue) => ({
+    subject: `Your return — order ${issue.order_number}`,
+    body: `Hi ${issue.customer_name ? issue.customer_name.split(' ')[0] : 'there'},\n\nThank you so much for returning your order!\n\nWe've received your return for order ${issue.order_number}, however it looks like some items may be missing. ${issue.notes ? 'Our team noted: ' + issue.notes + '.' : ''}\n\nCould you let us know if the remaining items are on their way in a separate parcel, or if there's anything else we should know?\n\nThanks so much,\nBaboodle Returns Team`
+  }),
+  missing_part: (issue) => ({
+    subject: `Your return — order ${issue.order_number}`,
+    body: `Hi ${issue.customer_name ? issue.customer_name.split(' ')[0] : 'there'},\n\nThank you so much for returning your order!\n\nWe've received your return for order ${issue.order_number}, however we noticed a part seems to be missing. ${issue.notes ? 'Our team noted: ' + issue.notes + '.' : ''}\n\nCould you check if it may have been left behind, and let us know if you're able to send it back to us?\n\nThanks so much,\nBaboodle Returns Team`
+  }),
+  damaged: (issue) => ({
+    subject: `Your return — order ${issue.order_number}`,
+    body: `Hi ${issue.customer_name ? issue.customer_name.split(' ')[0] : 'there'},\n\nThank you for returning your order.\n\nWe've received your return for order ${issue.order_number} and wanted to follow up regarding the condition of the item. ${issue.notes ? 'Our team noted: ' + issue.notes + '.' : 'We noticed some damage to the item.'}\n\nWe'll be reviewing this and will be in touch shortly with next steps.\n\nThanks,\nBaboodle Returns Team`
+  }),
+  wrong_item: (issue) => ({
+    subject: `Your return — order ${issue.order_number}`,
+    body: `Hi ${issue.customer_name ? issue.customer_name.split(' ')[0] : 'there'},\n\nThank you for returning your order!\n\nWe received your return for order ${issue.order_number}, however it looks like a different item may have been included. ${issue.notes ? 'Our team noted: ' + issue.notes + '.' : ''}\n\nCould you double check if you may have the correct item at home, and let us know so we can arrange the right return?\n\nThanks so much,\nBaboodle Returns Team`
+  }),
+  other: (issue) => ({
+    subject: `Your return — order ${issue.order_number}`,
+    body: `Hi ${issue.customer_name ? issue.customer_name.split(' ')[0] : 'there'},\n\nThank you for returning your order!\n\nWe wanted to follow up regarding your return for order ${issue.order_number}. ${issue.notes ? issue.notes : ''}\n\nPlease don't hesitate to get in touch if you have any questions.\n\nThanks so much,\nBaboodle Returns Team`
+  })
+};
+
+// ---- Load issues ----
+async function loadIssues() {
+  const { data, error } = await db
+    .from('issues')
+    .select('*')
+    .eq('logged_at_stage', 'return')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    document.getElementById('issues-list').innerHTML = '<div class="empty-list">Failed to load issues.</div>';
+    return;
+  }
+
+  allIssues = data || [];
+  document.getElementById('header-meta').textContent = allIssues.filter(i => !i.resolved_at).length + ' open issues';
+  filterIssues();
+}
+
+// ---- Filter ----
+function filterIssues() {
+  const search = document.getElementById('search-input').value.toLowerCase();
+  const type = document.getElementById('filter-type').value;
+  const status = document.getElementById('filter-status').value;
+
+  filteredIssues = allIssues.filter(issue => {
+    const matchSearch = !search ||
+      (issue.order_number || '').toLowerCase().includes(search) ||
+      (issue.customer_name || '').toLowerCase().includes(search) ||
+      (issue.tracking_number || '').toLowerCase().includes(search) ||
+      (issue.customer_email || '').toLowerCase().includes(search);
+    const matchType = !type || issue.issue_type === type;
+    const matchStatus = status === 'all' ||
+      (status === 'open' && !issue.resolved_at) ||
+      (status === 'resolved' && issue.resolved_at);
+    return matchSearch && matchType && matchStatus;
+  });
+
+  renderList();
+}
+window.filterIssues = filterIssues;
+
+// ---- Render list ----
+function renderList() {
+  const el = document.getElementById('issues-list');
+  document.getElementById('list-count').textContent = filteredIssues.length + ' issue' + (filteredIssues.length !== 1 ? 's' : '');
+
+  if (filteredIssues.length === 0) {
+    el.innerHTML = '<div class="empty-list">No issues found</div>';
+    return;
+  }
+
+  el.innerHTML = filteredIssues.map(issue => `
+    <div class="issue-row ${issue.resolved_at ? 'resolved' : ''} ${selectedIssue && selectedIssue.id === issue.id ? 'active' : ''}"
+         onclick="selectIssue('${issue.id}')">
+      <div class="issue-row-top">
+        <span class="issue-order">${issue.order_number || '--'}</span>
+        <span class="issue-date">${formatDate(issue.created_at)}</span>
+      </div>
+      <div class="issue-customer">${issue.customer_name || '--'}</div>
+      <span class="issue-type-badge badge-${issue.issue_type}">${ISSUE_LABELS[issue.issue_type] || issue.issue_type}</span>
+      ${issue.notes ? '<div class="issue-notes-preview">' + escHtml(issue.notes) + '</div>' : ''}
+      ${issue.resolved_at ? '<div class="chased-dot"></div>' : ''}
+    </div>
+  `).join('');
+}
+
+// ---- Select issue ----
+function selectIssue(id) {
+  selectedIssue = allIssues.find(i => i.id === id);
+  renderList();
+  renderDetail();
+}
+window.selectIssue = selectIssue;
+
+// ---- Render detail ----
+function renderDetail() {
+  const issue = selectedIssue;
+  if (!issue) return;
+
+  const template = EMAIL_TEMPLATES[issue.issue_type] ? EMAIL_TEMPLATES[issue.issue_type](issue) : EMAIL_TEMPLATES.other(issue);
+  const isResolved = !!issue.resolved_at;
+
+  document.getElementById('detail-panel').innerHTML = `
+    <div class="detail-header">
+      <div class="detail-header-left">
+        <h2>${issue.order_number || '--'}</h2>
+        <div class="sub">
+          <span class="issue-type-badge badge-${issue.issue_type}">${ISSUE_LABELS[issue.issue_type] || issue.issue_type}</span>
+          &nbsp;Logged ${formatDate(issue.created_at)} by ${issue.logged_by}
+          ${isResolved ? ' &middot; <span style="color:var(--green);font-weight:600">Resolved ' + formatDate(issue.resolved_at) + '</span>' : ''}
+        </div>
+      </div>
+      <button class="resolve-btn ${isResolved ? 'resolved-state' : ''}" onclick="${isResolved ? '' : 'openResolveModal()'}">
+        ${isResolved ? 'Resolved' : 'Mark resolved'}
+      </button>
+    </div>
+
+    <div class="detail-grid">
+      <div class="detail-card">
+        <div class="detail-card-title">Customer</div>
+        <div class="detail-field">
+          <div class="detail-field-label">Name</div>
+          <div class="detail-field-value">${escHtml(issue.customer_name || '--')}</div>
+        </div>
+        <div class="detail-field">
+          <div class="detail-field-label">Email</div>
+          <div class="detail-field-value"><a href="mailto:${issue.customer_email}" style="color:var(--red)">${issue.customer_email || '--'}</a></div>
+        </div>
+      </div>
+      <div class="detail-card">
+        <div class="detail-card-title">Return details</div>
+        <div class="detail-field">
+          <div class="detail-field-label">Order</div>
+          <div class="detail-field-value mono">${issue.order_number || '--'}</div>
+        </div>
+        <div class="detail-field">
+          <div class="detail-field-label">Tracking</div>
+          <div class="detail-field-value mono">${issue.tracking_number || '--'}</div>
+        </div>
+        <div class="detail-field">
+          <div class="detail-field-label">Logged by</div>
+          <div class="detail-field-value">${issue.logged_by}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-notes">
+      <div class="detail-card-title">Notes from warehouse</div>
+      <div style="font-size:14px;margin-top:8px;line-height:1.6;">${issue.notes ? escHtml(issue.notes) : '<span style="color:var(--text-3);font-style:italic">No notes added</span>'}</div>
+      ${issue.resolved_notes ? '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)"><div class="detail-field-label">Resolution note</div><div style="font-size:14px;margin-top:4px;">' + escHtml(issue.resolved_notes) + '</div></div>' : ''}
+    </div>
+
+    ${issue.photo_url ? `
+    <div class="detail-photo">
+      <div class="detail-card-title" style="margin-bottom:10px">Photo</div>
+      <img src="${issue.photo_url}" alt="Issue photo">
+      <div style="margin-top:8px"><a href="${issue.photo_url}" target="_blank" style="font-size:13px;color:var(--red)">Open full size</a></div>
+    </div>` : ''}
+
+    <div class="email-composer">
+      <div class="email-composer-header">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        Email customer
+      </div>
+      <div class="email-composer-body">
+        <div class="email-field">
+          <span class="email-field-label">To</span>
+          <span class="email-field-value">${escHtml(issue.customer_name || '')} &lt;${issue.customer_email || ''}&gt;</span>
+        </div>
+        <div class="email-field">
+          <span class="email-field-label">Subject</span>
+          <input class="email-subject-input" id="email-subject" value="${escHtml(template.subject)}">
+        </div>
+        <textarea class="email-body-textarea" id="email-body">${template.body}</textarea>
+        ${issue.photo_url ? `
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-2);cursor:pointer;padding:8px 0;border-top:1px solid var(--border)">
+          <input type="checkbox" id="attach-photo" checked style="width:15px;height:15px;cursor:pointer;accent-color:var(--red);">
+          Attach photo to email
+        </label>` : ''}
+        <div class="email-actions">
+          <button class="send-btn" id="send-btn" onclick="sendEmail()">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            Send email
+          </button>
+          <span class="send-status" id="send-status"></span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ---- Send email ----
+async function sendEmail() {
+  if (!selectedIssue) return;
+  const btn = document.getElementById('send-btn');
+  const status = document.getElementById('send-status');
+  const subject = document.getElementById('email-subject').value.trim();
+  const body = document.getElementById('email-body').value.trim();
+
+  if (!subject || !body) { status.textContent = 'Subject and body required.'; status.className = 'send-status error'; return; }
+  if (!selectedIssue.customer_email) { status.textContent = 'No customer email on file.'; status.className = 'send-status error'; return; }
+
+  btn.disabled = true;
+  btn.innerHTML = 'Sending...';
+  status.textContent = '';
+  status.className = 'send-status';
+
+  const attachPhoto = document.getElementById('attach-photo');
+  const photoUrl = (attachPhoto && attachPhoto.checked && selectedIssue.photo_url) ? selectedIssue.photo_url : null;
+
+  try {
+    const res = await fetch('/.netlify/functions/postmark', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        to: selectedIssue.customer_email,
+        toName: selectedIssue.customer_name || '',
+        subject,
+        body,
+        photoUrl,
+        issueId: selectedIssue.id
+      })
+    });
+    const data = await res.json();
+    if (res.ok && data.ErrorCode === 0) {
+      status.textContent = 'Email sent successfully';
+      status.className = 'send-status success';
+      // Update chased_at on the issue
+      await db.from('issues').update({ chased_at: new Date().toISOString() }).eq('id', selectedIssue.id);
+    } else {
+      status.textContent = 'Send failed: ' + (data.Message || 'Unknown error');
+      status.className = 'send-status error';
+    }
+  } catch(e) {
+    status.textContent = 'Send failed: ' + e.message;
+    status.className = 'send-status error';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Send email';
+  }
+}
+window.sendEmail = sendEmail;
+
+// ---- Resolve ----
+function openResolveModal() {
+  resolvingIssueId = selectedIssue.id;
+  document.getElementById('resolve-notes').value = '';
+  document.getElementById('resolve-modal').classList.add('visible');
+}
+window.openResolveModal = openResolveModal;
+
+function closeResolveModal() {
+  document.getElementById('resolve-modal').classList.remove('visible');
+  resolvingIssueId = null;
+}
+window.closeResolveModal = closeResolveModal;
+
+async function confirmResolve() {
+  if (!resolvingIssueId) return;
+  const notes = document.getElementById('resolve-notes').value.trim();
+  const now = new Date().toISOString();
+
+  await db.from('issues').update({
+    resolved_at: now,
+    resolved_notes: notes || null
+  }).eq('id', resolvingIssueId);
+
+  // Update local state
+  const idx = allIssues.findIndex(i => i.id === resolvingIssueId);
+  if (idx !== -1) {
+    allIssues[idx].resolved_at = now;
+    allIssues[idx].resolved_notes = notes || null;
+    selectedIssue = allIssues[idx];
+  }
+
+  closeResolveModal();
+  document.getElementById('header-meta').textContent = allIssues.filter(i => !i.resolved_at).length + ' open issues';
+  filterIssues();
+  renderDetail();
+}
+window.confirmResolve = confirmResolve;
+
+// ---- Helpers ----
+function formatDate(iso) {
+  if (!iso) return '--';
+  return new Date(iso).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ---- Init ----
+loadIssues();
+
+})();
+</script>
+</body>
+</html>
