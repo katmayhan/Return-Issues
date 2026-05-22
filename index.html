@@ -502,7 +502,7 @@ const EMAIL_TEMPLATES = {
   }),
   other: (issue) => ({
     subject: `Your return — order ${issue.order_number}`,
-    body: `Hi ${issue.customer_name ? issue.customer_name.split(' ')[0] : 'there'},\n\nThank you for returning your order!\n\nWe wanted to follow up regarding your return for order ${issue.order_number}. ${issue.notes ? issue.notes : ''}\n\nPlease don't hesitate to get in touch if you have any questions.\n\nThanks so much,\nBaboodle Returns Team`
+    body: `Hi ${issue.customer_name ? issue.customer_name.split(' ')[0] : 'there'},\n\nThank you for returning your order!\n\nWe wanted to follow up regarding your return for order ${issue.order_number}. ${issue.notes ? 'Our team noted: ' + issue.notes : ''}\n\nPlease don't hesitate to get in touch if you have any questions.\n\nThanks so much,\nBaboodle Returns Team`
   })
 };
 
